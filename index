@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kloonta Classic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Digital-7';
+            src: url('https://raw.githubusercontent.com/kevincennis/Mix.js/master/public/fonts/digital-7.woff') format('woff');
+        }
+        body {
+            background-color: #000;
+            color: #00FFFF;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #FFFF00;
+            text-shadow: 0 0 10px #FFFF00;
+        }
+        button {
+            background-color: #000;
+            border: 2px solid #00FFFF;
+            color: #00FFFF;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px #00FFFF;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.1s ease;
+            border-radius: 5px;
+            position: relative;
+        }
+        button:hover {
+            box-shadow: 0 0 10px #00FFFF;
+        }
+        #track {
+            margin: 0 auto;
+            width: 80%;
+            text-align: left;
+        }
+        .pod-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            border: 2px solid #00FF00;
+            box-shadow: 0 0 5px #00FF00;
+        }
+        .pod-name {
+            width: 200px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00FFFF;
+        }
+        .pod-numbers {
+            font-family: 'Digital-7';
+            color: #FF6600;
+            text-shadow: 0 0 5px #FF6600;
+        }
+        .pod-bar {
+            height: 12px;
+            background-color: #000;
+            position: relative;
+            flex-grow: 1;
+            border: 1px solid #00FF00;
+            box-shadow: 0 0 5px #00FF00;
+        }
+        .pod-position {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            color: #FF6600;
+            font-size: 10px;
+            font-family: 'Digital-7';
+            text-shadow: 0 0 5px #FF6600;
+        }
+        .position-line {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 1px;
+            background-color: #00FFFF;
+            z-index: 1;
+            box-shadow: 0 0 3px #00FFFF;
+        }
+        .red-line {
+            position: absolute;
+            top: 0;
+            left: calc((9.5 / 15) * 100%);
+            height: 100%;
+            width: 2px;
+            background-color: red;
+            z-index: 1;
+            box-shadow: 0 0 5px red;
+        }
+        .finish-line {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #FFFFFF;
+            z-index: 1;
+            box-shadow: 0 0 5px #FFFFFF;
+        }
+        .position-row {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .position-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #FF6600;
+            font-family: 'Digital-7';
+            text-shadow: 0 0 5px #FF6600;
+        }
+        #log {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #001010;
+            padding: 10px;
+            border: 1px solid #00FFFF;
+            height: 200px;
+            overflow-y: scroll;
+            box-shadow: 0 0 10px #00FFFF;
+            color: #00FFFF;
+            text-shadow: 0 0 3px #00FFFF;
+        }
+        /* Visual cue when racer is boosted */
+        .boost-cursor {
+            position: absolute;
+            top: -15px;
+            right: -5px;
+            background-color: #FFFF00;
+            border: 2px solid #FFFF00;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 0 10px #FFFF00;
+            animation: boost-anim 0.1s ease-in-out;
+        }
+        @keyframes boost-anim {
+            0% {
+                transform: translateX(-50%) scale(1);
+                background-color: #FFFF00;
+            }
+            50% {
+                transform: translateX(-50%) scale(0.8);
+                background-color: #FF00FF;
+            }
+            100% {
+                transform: translateX(-50%) scale(1);
+                background-color: #FFFF00;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Kloonta Classic</h1>
+    <p>Head to the desert canyons for a day of high-speed pod racing, cheering, and betting on your favorite pods!</p>
+    <button id="start">Start New Race</button>
+    <div id="track"></div>
+    <div id="log"></div>
+
+    <script>
+        const pods = [
+            {name: "Dud Bolt", numbers: [2, 3], bonus: 3, position: 0, color: "#0000FF"},
+            {name: "Aldar Beedo", numbers: [4], bonus: 3, position: 0, color: "#00FF00"},
+            {name: "Ark Bumpy Roose", numbers: [5], bonus: 2, position: 0, color: "#FFA500"},
+            {name: "Teemto Pagalies", numbers: [6], bonus: 1, position: 0, color: "#800080"},
+            {name: "Mars Guo", numbers: [7], bonus: 0, position: 0, color: "#008000"},
+            {name: "Clegg Holdfast", numbers: [8], bonus: 1, position: 0, color: "#00FFFF"},
+            {name: "Ben Quadinaros", numbers: [9], bonus: 2, position: 0, color: "#FF00FF"},
+            {name: "Mawhonic", numbers: [10], bonus: 3, position: 0, color: "#FFFF00"},
+            {name: "Boles Roor", numbers: [11, 12], bonus: 3, position: 0, color: "#A52A2A"}
+        ];
+
+        const redLine = 10;
+        const finishLine = 15;
+        let previousPod = null;
+        let snakeEyesCount = 0;
+        let boxCarsCount = 0;
+        let noMoreBetsCalled = false;
+        let interval = null;
+        let boostInterval = null;
+
+        document.getElementById('start').addEventListener('click', startRace);
+
+        function startRace() {
+            pods.forEach(p => p.position = 0);
+            previousPod = null;
+            snakeEyesCount = 0;
+            boxCarsCount = 0;
+            noMoreBetsCalled = false;
+            document.getElementById('log').innerHTML = '';
+            updateTrack();
+            log("Racers to your pods... And they're off into the desert canyons!");
+            speak("Racers to your pods... And they're off into the desert canyons!");
+            boostInterval = setInterval(rollDice, 1000);
+        }
+
+        function rollDice() {
+            const die1 = Math.floor(Math.random() * 6) + 1;
+            const die2 = Math.floor(Math.random() * 6) + 1;
+            const sum = die1 + die2;
+            let announce = sum;
+            if (sum === 2) {
+                snakeEyesCount++;
+            } else if (sum === 12) {
+                boxCarsCount++;
+            }
+            const currentPod = pods.find(p => p.numbers.includes(sum));
+            if (!currentPod) return;
+            let moves = 1;
+            let moveMessage = `${currentPod.name} advances 1 sector.`;
+            if (previousPod === currentPod && currentPod.bonus > 0) {
+                moves += currentPod.bonus;
+                moveMessage = `Boost activated! ${currentPod.name} surges forward ${moves} sectors!`;
+            }
+            log(moveMessage);
+            speak(moveMessage);
+            currentPod.position += moves;
+            if (currentPod.position > finishLine) currentPod.position = finishLine;
+
+            updateTrack();
+            announcePositions();
+
+            const crossedRed = pods.filter(p => p.position >= redLine).length;
+            if (crossedRed >= 3 && !noMoreBetsCalled) {
+                log("No more bets! Three pods have crossed the red line in the canyons!");
+                speak("No more bets! Three pods have crossed the red line in the canyons!");
+                noMoreBetsCalled = true;
+            }
+
+            if (pods.some(p => p.position >= finishLine)) {
+                clearInterval(interval);
+                log("The race has ended! Pods cross the finish line amid swirling sands!");
+                speak("The race has ended! Pods cross the finish line amid swirling sands!");
+                const sorted = [...pods].sort((a, b) => b.position - a.position || pods.indexOf(a) - pods.indexOf(b));
+                log(`Win: ${sorted[0].name}. Place: ${sorted[1].name}. Show: ${sorted[2].name}.`);
+            }
+
+            previousPod = currentPod;
+        }
+
+        function announcePositions() {
+            const sorted = [...pods].sort((a, b) => b.position - a.position || pods.indexOf(a) - pods.indexOf(b));
+            let positionMessage = "";
+            for (let i = 0; i < 3; i++) {
+                if (sorted[i]) {
+                    positionMessage += `${sorted[i].name}. `;
+                }
+            }
+        }
+
+        function updateTrack() {
+            let html = '';
+            pods.forEach(p => {
+                const progressWidth = (p.position / finishLine) * 100;
+                html += `
+                    <div class="pod-row">
+                        <div class="pod-name" style="color: ${p.color};">${p.name}</div>
+                        <div class="pod-numbers">${p.numbers.join(', ')}</div>
+                        <div class="pod-bar">
+                            <div class="pod-progress" style="width: ${progressWidth}%;"></div>
+                            <div class="position-line" style="left: calc((1 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((2 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((3 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((4 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((5 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((6 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((7 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((8 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((9 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((10 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((11 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((12 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((13 / 15) * 100%);"></div>
+                            <div class="position-line" style="left: calc((14 / 15) * 100%);"></div>
+                            <div class="red-line"></div>
+                            <div class="finish-line"></div>
+                            <div class="pod-position">${p.position}/${finishLine}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `
+                <div class="position-row">
+                    <div class="pod-name"></div>
+                    <div class="pod-bar" style="border:none; background:none; height:20px; position: relative;">
+                        <div class="position-label" style="left: calc((0 / 15) * 100%);">0</div>
+                        <div class="position-label" style="left: calc((1 / 15) * 100%);">1</div>
+                        <div class="position-label" style="left: calc((2 / 15) * 100%);">2</div>
+                        <div class="position-label" style="left: calc((3 / 15) * 100%);">3</div>
+                        <div class="position-label" style="left: calc((4 / 15) * 100%);">4</div>
+                        <div class="position-label" style="left: calc((5 / 15) * 100%);">5</div>
+                        <div class="position-label" style="left: calc((6 / 15) * 100%);">6</div>
+                        <div class="position-label" style="left: calc((7 / 15) * 100%);">7</div>
+                        <div class="position-label" style="left: calc((8 / 15) * 100%);">8</div>
+                        <div class="position-label" style="left: calc((9 / 15) * 100%);">9</div>
+                        <div class="position-label" style="left: calc((10 / 15) * 100%);">10</div>
+                        <div class="position-label" style="left: calc((11 / 15) * 100%);">11</div>
+                        <div class="position-label" style="left: calc((12 / 15) * 100%);">12</div>
+                        <div class="position-label" style="left: calc((13 / 15) * 100%);">13</div>
+                        <div class="position-label" style="left: calc((14 / 15) * 100%);">14</div>
+                        <div class="position-label" style="left: calc((15 / 15) * 100%);">15</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('track').innerHTML = html;
+        }
+
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += msg + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Visual cue when racer is boosted
+        function visualizeBoost() {
+            const racer = pods.find(p => p.name === currentPod.name);
+            const progress = racer.position / finishLine;
+            const width = (progress / 15) * 100;
+            
+            const visualStyle = `
+                .pod-row {
+                    display: flex;
+                    align-items: center;
+                    margin: 5px;
+                    border: 3px solid #FFFF00;
+                    box-shadow: 0 0 10px #FFFF00;
+                    animation: boost-anim 0.1s ease-in-out;
+                }
+            `;
+            
+            const racerBar = document.querySelector('.pod-bar');
+            racerBar.style.transition = 'none';
+            racerBar.style.width = `${width}%`;
+            racerBar.style.transform = 'scale(1.05)';
+            racerBar.style.background = '#FFFF00';
+            
+            if (!boostEnabled) {
+                // If not boosted, revert to original color
+                racerBar.style.transition = 'none';
+                racerBar.style.backgroundColor = racer.color;
+                racerBar.style.border = 'none';
+                racerBar.style.boxShadow = 'none';
+            }
+            
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    if (boostEnabled) {
+                        resolve();
+                    } else {
+                        racerBar.style.backgroundColor = racer.color;
+                        racerBar.style.border = 'none';
+                        racerBar.style.boxShadow = 'none';
+                    }
+                }, 1000);
+            });
+        }
+
+        // Add boost visual effect
+        visualizeBoost();
+
+        // Add visual cue when racer is boosted
+        visualizeBoost();
+
+        // Add visual indicator when racer is boosted
+        visualizeBoost();
+
+        // Pause Button
+        const pauseBtn = document.getElementById('pause');
+        let isPaused = false;
+        let boostInterval = null;
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                clearInterval(interval);
+                document.body.style.backgroundColor = '#001010';
+                document.body.style.color = '#FFFF00';
+                log("Racers to your pods... And they're off into the desert canyons!");
+                speak("Racers to your pods... And they're off into the desert canyons!");
+                // Pause game logic
+                return;
+            } else {
+                interval = setInterval(rollDice, 1000);
+                document.body.style.backgroundColor = '#000';
+                document.body.style.color = '#00FFFF';
+                document.body.style.textAlign = 'center';
+                document.body.style.fontSize = '20px';
+                log("Racers to your pods... And they're off into the desert canyons!");
+                speak("Racers to your pods... And they're off into the desert canyons!");
+            }
+        }
+
+        pauseBtn.addEventListener('click', togglePause);
+
+        // Visual cue when racer is boosted
+        visualizeBoost();
+
+        // Add visual indicator when racer is boosted
+        visualizeBoost();
+    </script>
+</body>
+</html>
